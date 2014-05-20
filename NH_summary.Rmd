@@ -1,0 +1,181 @@
+Summary of Severe Weather Events Statistics across the USA (2009-2011)
+========================================================
+
+**P. Paquay**
+
+# Synopsis
+
+This study uses a Storm database from the The U.S. National Oceanic and Atmospheric Administration (NOAA) to determine which types of weather events are most harmful and which types have the greatest economic consequences across the USA.
+
+To realize this study we did a lot of data cleaning (dates as POSIXct, property and crop damages in a useable format, subsetting on dates from 2009, subsetting on US states, ...). We also grouped the weather event types in seven categories as the number of unique values is too large to manage without these categories.
+
+The results are presented in three different plots and three different tables.
+
+# Data processing
+
+## Loading data
+
+The "loading data" phase consists simply in downloading the .csv.bz2 file with the download.file() function and reading the .csv file into a data frame named "storm.data".
+
+```{r cache = TRUE, echo = TRUE}
+## download.file("https://d396qusza40orc.cloudfront.net/repdata/data/StormData.csv.bz2", "StormData.csv.bz2", method = "curl")
+storm.data <- read.csv(bzfile("StormData.csv.bz2"), stringsAsFactors = FALSE)
+```
+
+We have now a data frame of `r nrow(storm.data)` rows and `r ncol(storm.data)` columns.
+
+## Cleaning data
+
+We begin by creating a new variable "date" in the "storm.data" dataset by transforming the "BGN_DATE" variable into a POSIXct variable.
+
+```{r cache = TRUE, echo = TRUE}
+storm.data$date <- as.Date(storm.data$BGN_DATE, format = "%m/%d/%Y")
+```
+
+Then we create a new variable "prop.damage" in the "storm.data" dataset by using the "PROPDMG" as the coefficient and "PROPDMGEXP" as the exponent of the base 10 power (with B = 9, M = 6, K = 3, H = 2). We proceed in a similar way to create the variable "crop.damage".
+
+```{r cache = TRUE, echo = TRUE}
+storm.data$prop.damage <- rep(0, nrow(storm.data))
+storm.data$prop.damage <- ifelse(storm.data$PROPDMGEXP == "B", storm.data$PROPDMG * 1e+09, ifelse(storm.data$PROPDMGEXP %in% c("M", "m"), storm.data$PROPDMG * 1e+06, ifelse(storm.data$PROPDMGEXP == "K", storm.data$PROPDMG * 1000, ifelse(storm.data$PROPDMGEXP %in% c("H", "h"), storm.data$PROPDMG * 100, ifelse(storm.data$PROPDMGEXP %in% seq("0":"9"), storm.data$PROPDMG * 10^as.numeric(as.character(storm.data$PROPDMGEXP)), storm.data$PROPDMG)))))
+
+storm.data$crop.damage <- rep(0, nrow(storm.data))
+storm.data$crop.damage <- ifelse(storm.data$CROPDMGEXP == "B", storm.data$CROPDMG * 1e+09, ifelse(storm.data$CROPDMGEXP %in% c("M", "m"), storm.data$CROPDMG * 1e+06, ifelse(storm.data$CROPDMGEXP == "K", storm.data$CROPDMG * 1000, ifelse(storm.data$CROPDMGEXP %in% c("H", "h"), storm.data$CROPDMG * 100, ifelse(storm.data$CROPDMGEXP %in% seq("0":"9"), storm.data$CROPDMG * 10^as.numeric(as.character(storm.data$CROPDMGEXP)), storm.data$CROPDMG)))))
+```
+
+## Creating categories
+
+We will use seven categories as suggested by the "Summary of Natural Hazard Statistics for 2009 in the United States" from the National Weather Service (NWS) :
+- *Convection* (lightning, tornado, thunderstorm and hail).
+- *Extreme Temperatures* (cold and heat).
+- *Flood* (flash flood and river flood).
+- *Marine* (coastal storm, tsunami and rip current).
+- *Tropical Cyclones* (tropical storm and hurricane).
+- *Winter* (winter storm, ice and avalanche).
+- *Other* (drought, dust storm, dust devil, ...).
+
+To create these categories we will use several regular expressions namely "ind.convection", "ind.ext.temp", "ind.flood", "ind.marine", "ind.trop.cycl" and "ind.winter".
+
+```{r cache = TRUE, echo = TRUE}
+ind.convection <- "\\bL\\S+?G\\b|(NADO)|(\\bTOR\\S+?O\\b|(\\bFUN))|THUNDERSTORM|TSTM|(WIND)|(WND)|HAIL"
+ind.ext.temp <- "COLD|HEAT|HYPERTHERMIA|HYPOTHERMIA|LOW TEMPERATURE|RECORD HIGH|RECORD LOW|Record temperature|RECORD WARM|Temperature record|UNSEASONABLY COOL|UNSEASONABLY HOT|UNUSUAL WARMTH|UNUSUAL/RECORD WARMTH|UNUSUALLY WARM|VERY WARM|WARM WEATHER|WARM DRY CONDITIONS|RECORD COLD"
+ind.flood <- "(\\bFL\\S+?D)|RAIN|PRECIP|SHOWER"
+ind.marine <- "^COASTAL(\\s)?STORM$|TSUNAMI|^RIP CUR"
+ind.trop.cycl <- "HURRICANE|TROPICAL STORM"
+ind.winter <- "(SNOW)|(ICE)|(ICY)|(FREEZ)|(WINT)|AVALAN|FROST|LOW TEMP|BLIZZARD"
+```
+
+Below you'll find the values of the "EVTYPE" variable placed into the *Convection* category.
+
+```{r cache = TRUE, echo = TRUE}
+sort(unique(grep(ind.convection, storm.data$EVTYPE, ignore.case = TRUE, value  = TRUE)))
+```
+
+Below you'll find the values of the "EVTYPE" variable placed into the *Extreme Temperature* category.
+
+```{r cache = TRUE, echo = TRUE}
+sort(unique(grep(ind.ext.temp, storm.data$EVTYPE, ignore.case = TRUE, value  = TRUE)))
+```
+
+Below you'll find the values of the "EVTYPE" variable placed into the *Flood* category.
+
+```{r cache = TRUE, echo = TRUE}
+sort(unique(grep(ind.flood, storm.data$EVTYPE, ignore.case = TRUE, value  = TRUE)))
+```
+
+Below you'll find the values of the "EVTYPE" variable placed into the *Marine* category.
+
+```{r cache = TRUE, echo = TRUE}
+sort(unique(grep(ind.marine, storm.data$EVTYPE, ignore.case = TRUE, value  = TRUE)))
+```
+
+Below you'll find the values of the "EVTYPE" variable placed into the *Tropical Cyclones* category.
+
+```{r cache = TRUE, echo = TRUE}
+sort(unique(grep(ind.trop.cycl, storm.data$EVTYPE, ignore.case = TRUE, value  = TRUE)))
+```
+
+Below you'll find the values of the "EVTYPE" variable placed into the *Winter* category.
+
+```{r cache = TRUE, echo = TRUE}
+sort(unique(grep(ind.winter, storm.data$EVTYPE, ignore.case = TRUE, value  = TRUE)))
+```
+
+## Grouping events into categories
+
+As some events are listed in more than one category (e.g. "THUNDERSTORM WIND/FLASH FLOOD" which may be in the "Convection" or "Flood" categories), we need to fix some some precedence in the created categories. This hierarchy is suggested by the NWS and is ordered as :
+
+1. *Convection*.
+2. *Extreme Temperatures*.
+3. *Flood*.
+4. *Marine*.
+5. *Tropical Cyclones*.
+6. *Winter*.
+7. *Other*.
+
+So we now create a new factor variable named "category" as follows.
+
+```{r cache = TRUE, echo = TRUE}
+storm.data$category <- rep(0, nrow(storm.data))
+storm.data$category <- ifelse(grepl(ind.convection, storm.data$EVTYPE, ignore.case = TRUE), 1, ifelse(grepl(ind.ext.temp, storm.data$EVTYPE, ignore.case = TRUE), 2, ifelse(grepl(ind.flood, storm.data$EVTYPE, ignore.case = TRUE), 3, ifelse(grepl(ind.marine, storm.data$EVTYPE, ignore.case = TRUE), 4, ifelse(grepl(ind.trop.cycl, storm.data$EVTYPE, ignore.case = TRUE), 5, ifelse(grepl(ind.winter, storm.data$EVTYPE, ignore.case = TRUE), 6, 7))))))
+storm.data$category <- factor(storm.data$category)
+levels(storm.data$category) <- c("convection", "extreme.temp", "flood", "marine", "tropical.cycl", "winter", "other")
+```
+
+## Restricting date range and locations
+
+The date range of the "storm.data" dataset is given below.
+
+```{r cache = TRUE, echo = TRUE}
+c(min(storm.data$date), max(storm.data$date))
+```
+
+We see that the weather events go as far back as 1950. However, when we examine the date range for each category we find out that only the *Convection* events go back as far as 1950, the other events reach only as far back as 1993.
+
+```{r cache = TRUE, echo = TRUE}
+min(subset(storm.data, category == "convection")$date)
+min(subset(storm.data, category != "convection")$date)
+```
+
+So, to have coherent date ranges across categories, we will limit the date ranges to 1993 to 2011.
+
+```{r cache = TRUE, echo = TRUE}
+storm.data.restricted <- subset(storm.data, date >= "1993-01-01")
+```
+
+We will also limit our dataset to the fifty states of the USA.
+
+```{r cache = TRUE, echo = TRUE}
+storm.data.restricted <- subset(storm.data.restricted, STATE %in% state.abb)
+```
+
+# Results
+
+## Fatalities
+
+Below you'll find a mosaic plot of the fatalities for each state and each category of events. To achieve this we need a new data frame "sum.fatalities" that computes the number of fatalities for each state and each category of events.
+
+```{r cache = TRUE, echo = TRUE, fig.width = 12}
+library(ggplot2)
+sum.fatalities <- aggregate(storm.data.restricted$FATALITIES, list(category = storm.data.restricted$category, state = storm.data.restricted$STATE), sum)
+colnames(sum.fatalities)[3] <- "fatalities"
+ggplot(sum.fatalities, aes(x = state, y = fatalities, fill = category)) + geom_bar(stat = "identity") + ggtitle("Fatalities by state and by category") + labs(x = "State", y = "Fatalities") + theme(plot.title = element_text(size = 20), legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other"))
+```
+
+We're able to see very clearly that the state of Illinois is the more severely affected by casualties (this is mainly due to the *Extreme Temperatures* type of events).
+
+If we take a look at the fatalities in the entire USA, we may note that it is the *Convection* type of events that is responsible of the biggest part of fatalities due to weather events.
+
+```{r cache = TRUE, echo = TRUE}
+sum.fatalities.USA <- aggregate(sum.fatalities$fatalities, list(category = sum.fatalities$category), sum)
+colnames(sum.fatalities.USA)[2] <- "fatalities"
+sum.fatalities.USA[order(sum.fatalities.USA$fatalities, decreasing = TRUE), ]
+```
+
+To conclude this subsection, we can give a table listing the category of events responsible of the greatest number of fatalities for each state.
+
+```{r cache = TRUE, echo = TRUE}
+library(plyr)
+rank.fatalities <- ddply(sum.fatalities, "state", subset, fatalities == max(fatalities))
+rank.fatalities <- rank.fatalities[c("state", "category", "fatalities")]
+rank.fatalities
+```

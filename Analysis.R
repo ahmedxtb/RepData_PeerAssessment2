@@ -11,12 +11,14 @@ storm.data$prop.damage <- ifelse(storm.data$PROPDMGEXP == "B", storm.data$PROPDM
 storm.data$crop.damage <- rep(0, nrow(storm.data))
 storm.data$crop.damage <- ifelse(storm.data$CROPDMGEXP == "B", storm.data$CROPDMG * 1e+09, ifelse(storm.data$CROPDMGEXP %in% c("M", "m"), storm.data$CROPDMG * 1e+06, ifelse(storm.data$CROPDMGEXP == "K", storm.data$CROPDMG * 1000, ifelse(storm.data$CROPDMGEXP %in% c("H", "h"), storm.data$CROPDMG * 100, ifelse(storm.data$CROPDMGEXP %in% seq("0":"9"), storm.data$CROPDMG * 10^as.numeric(as.character(storm.data$CROPDMGEXP)), storm.data$CROPDMG)))))
 
-ind.convection <- "\\bL\\S+?G\\b|(NADO)|(\\bTOR\\S+?O\\b|(\\bFUN))|THUNDERSTORM|TSTM|(WIND)|(WND)|HAIL"
+ind.convection <- "\\bL\\S+?G\\b|(NADO)|(\\bTOR\\S+?O\\b|(\\bFUN))|THUNDERSTORM|TSTM|(WIND)|(WND)|(HAIL)"
 ind.ext.temp <- "COLD|HEAT|HYPERTHERMIA|HYPOTHERMIA|LOW TEMPERATURE|RECORD HIGH|RECORD LOW|Record temperature|RECORD WARM|Temperature record|UNSEASONABLY COOL|UNSEASONABLY HOT|UNUSUAL WARMTH|UNUSUAL/RECORD WARMTH|UNUSUALLY WARM|VERY WARM|WARM WEATHER|WARM DRY CONDITIONS"
 ind.flood <- "(\\bFL\\S+?D)|RAIN|PRECIP|SHOWER"
 ind.marine <- "^COASTAL(\\s)?STORM$|TSUNAMI|^RIP CUR"
 ind.trop.cycl <- "HURRICANE|TROPICAL STORM"
 ind.winter <- "(SNOW)|(ICE)|(ICY)|(FREEZ)|(WINT)|AVALAN|FROST|LOW TEMP|BLIZZARD"
+
+unique(grep(ind.convection, storm.data$EVTYPE, ignore.case = TRUE, value  = TRUE))
 
 storm.data$category <- rep(0, nrow(storm.data))
 storm.data$category <- ifelse(grepl(ind.convection, storm.data$EVTYPE, ignore.case = TRUE), 1, ifelse(grepl(ind.ext.temp, storm.data$EVTYPE, ignore.case = TRUE), 2, ifelse(grepl(ind.flood, storm.data$EVTYPE, ignore.case = TRUE), 3, ifelse(grepl(ind.marine, storm.data$EVTYPE, ignore.case = TRUE), 4, ifelse(grepl(ind.trop.cycl, storm.data$EVTYPE, ignore.case = TRUE), 5, ifelse(grepl(ind.winter, storm.data$EVTYPE, ignore.case = TRUE), 6, 7))))))
@@ -56,12 +58,25 @@ print(xtable(sum.fatalities.USA, digits = 0), type = "html", include.rownames = 
 sum.injuries.USA <- aggregate(sum.injuries$injuries, list(category = sum.injuries$category), sum)
 colnames(sum.injuries.USA)[2] <- "injuries"
 sum.injuries.USA[order(sum.injuries.USA$injuries, decreasing = TRUE), ]
-library(xtable)
 print(xtable(sum.injuries.USA, digits = 0), type = "html", include.rownames = FALSE)
 
 sum.damage.USA <- aggregate(sum.damage$damages, list(category = sum.damage$category), sum)
 colnames(sum.damage.USA)[2] <- "damages"
 sum.damage.USA[order(sum.damage.USA$damages, decreasing = TRUE), ]
-library(xtable)
 print(xtable(sum.damage.USA, digits = 0), type = "html", include.rownames = FALSE)
 
+sum.fatalities[order(rev(sum.fatalities$state), sum.fatalities$fatalities, decreasing = TRUE), ]
+library(plyr)
+rank.fatalities <- ddply(sum.fatalities, "state", subset, fatalities == max(fatalities))
+rank.fatalities <- rank.fatalities[c("state", "category", "fatalities")]
+print(xtable(rank.fatalities, digits = 0), type = "html", include.rownames = FALSE)
+
+sum.injuries[order(rev(sum.injuries$state), sum.injuries$injuries, decreasing = TRUE), ]
+rank.injuries <- ddply(sum.injuries, "state", subset, injuries == max(injuries))
+rank.injuries <- rank.injuries[c("state", "category", "injuries")]
+print(xtable(rank.injuries, digits = 0), type = "html", include.rownames = FALSE)
+
+sum.damage[order(rev(sum.damage$state), sum.damage$damages, decreasing = TRUE), ]
+rank.damage <- ddply(sum.damage, "state", subset, damages == max(damages))
+rank.damage <- rank.damage[c("state", "category", "damages")]
+print(xtable(rank.damage, digits = 0), type = "html", include.rownames = FALSE)
