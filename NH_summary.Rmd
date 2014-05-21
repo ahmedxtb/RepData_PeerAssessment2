@@ -1,4 +1,4 @@
-Summary of Severe Weather Events Statistics across the USA (2009-2011)
+Summary of Severe Weather Events Statistics across the USA (1993-2011)
 ========================================================
 
 **P. Paquay**
@@ -7,26 +7,42 @@ Summary of Severe Weather Events Statistics across the USA (2009-2011)
 
 This study uses a Storm database from the The U.S. National Oceanic and Atmospheric Administration (NOAA) to determine which types of weather events are most harmful and which types have the greatest economic consequences across the USA.
 
-To realize this study we did a lot of data cleaning (dates as POSIXct, property and crop damages in a useable format, subsetting on dates from 2009, subsetting on US states, ...). We also grouped the weather event types in seven categories as the number of unique values is too large to manage without these categories.
+To realize this study we did a lot of data cleaning (dates in Date format, property and crop damages in a computable format, subsetting on dates from 1993, subsetting on US states, ...). We also grouped the weather event types in seven categories for ease of readability as the number of unique values is too large to manage without these categories.
 
-The results are presented in three different plots and three different tables.
+The results are presented in three different plots and six different tables.
 
 # Data processing
 
-## Loading data
+## Locales
 
-The "loading data" phase consists simply in downloading the .csv.bz2 file with the download.file() function and reading the .csv file into a data frame named "storm.data".
+First we need to set the locales to the English language.
 
 ```{r cache = TRUE, echo = TRUE}
-## download.file("https://d396qusza40orc.cloudfront.net/repdata/data/StormData.csv.bz2", "StormData.csv.bz2", method = "curl")
+Sys.setlocale(locale = "en_GB.UTF-8")
+```
+
+## Software environment
+
+The details about the software environment used for this analysis is given by the sessionInfo() function.
+
+```{r cache = TRUE, echo = TRUE}
+sessionInfo()
+```
+
+## Reading data
+
+This phase consists simply in downloading the .csv.bz2 file with the download.file() function and reading the .csv file into a data frame named "storm.data".
+
+```{r cache = TRUE, echo = TRUE}
+download.file("https://d396qusza40orc.cloudfront.net/repdata/data/StormData.csv.bz2", "StormData.csv.bz2", method = "curl")
 storm.data <- read.csv(bzfile("StormData.csv.bz2"), stringsAsFactors = FALSE)
 ```
 
-We have now a data frame of `r nrow(storm.data)` rows and `r ncol(storm.data)` columns.
+The "storm.data" data frame has `r nrow(storm.data)` rows and `r ncol(storm.data)` columns.
 
 ## Cleaning data
 
-We begin by creating a new variable "date" in the "storm.data" dataset by transforming the "BGN_DATE" variable into a POSIXct variable.
+We begin by creating a new variable "date" in the "storm.data" dataset by coercing the "BGN_DATE" variable into a Date format variable.
 
 ```{r cache = TRUE, echo = TRUE}
 storm.data$date <- as.Date(storm.data$BGN_DATE, format = "%m/%d/%Y")
@@ -102,7 +118,7 @@ sort(unique(grep(ind.winter, storm.data$EVTYPE, ignore.case = TRUE, value  = TRU
 
 ## Grouping events into categories
 
-As some events are listed in more than one category (e.g. "THUNDERSTORM WIND/FLASH FLOOD" which may be in the "Convection" or "Flood" categories), we need to fix some some precedence in the created categories. This hierarchy is suggested by the NWS and is ordered as :
+As some events are listed in more than one category (e.g. "SNOW/COLD" which may be in the *Extreme Temperatures* or *Winter* categories), we need to fix some some precedence in the created categories. This hierarchy is suggested by the NWS and is ordered as :
 
 1. *Convection*.
 2. *Extreme Temperatures*.
@@ -129,7 +145,7 @@ The date range of the "storm.data" dataset is given below.
 c(min(storm.data$date), max(storm.data$date))
 ```
 
-We see that the weather events go as far back as 1950. However, when we examine the date range for each category we find out that only the *Convection* events go back as far as 1950, the other events reach only as far back as 1993.
+We see that the weather events go as far back as 1950. However, when we examine the date range for each category we find out that only the *Convection* events go back as far as 1950, the other categories reach only as far back as 1993.
 
 ```{r cache = TRUE, echo = TRUE}
 min(subset(storm.data, category == "convection")$date)
@@ -142,7 +158,7 @@ So, to have coherent date ranges across categories, we will limit the date range
 storm.data.restricted <- subset(storm.data, date >= "1993-01-01")
 ```
 
-We will also limit our dataset to the fifty states of the USA.
+We will also limit our dataset to the fifty states of the USA as given in the "state.abb" vector.
 
 ```{r cache = TRUE, echo = TRUE}
 storm.data.restricted <- subset(storm.data.restricted, STATE %in% state.abb)
@@ -152,7 +168,7 @@ storm.data.restricted <- subset(storm.data.restricted, STATE %in% state.abb)
 
 ## Fatalities
 
-Below you'll find a mosaic plot of the fatalities for each state and each category of events. To achieve this we need a new data frame "sum.fatalities" that computes the number of fatalities for each state and each category of events.
+Below you'll find a stacked bar plot of the fatalities for each state and each category of events. To achieve this we need a new data frame "sum.fatalities" that computes the number of fatalities for each state and each category of events with the help of the agggregate() function.
 
 ```{r cache = TRUE, echo = TRUE, fig.width = 12}
 library(ggplot2)
@@ -171,11 +187,70 @@ colnames(sum.fatalities.USA)[2] <- "fatalities"
 sum.fatalities.USA[order(sum.fatalities.USA$fatalities, decreasing = TRUE), ]
 ```
 
-To conclude this subsection, we can give a table listing the category of events responsible of the greatest number of fatalities for each state.
+To conclude this subsection, we give a table listing the category of events responsible of the greatest number of fatalities for each state.
 
 ```{r cache = TRUE, echo = TRUE}
 library(plyr)
 rank.fatalities <- ddply(sum.fatalities, "state", subset, fatalities == max(fatalities))
 rank.fatalities <- rank.fatalities[c("state", "category", "fatalities")]
 rank.fatalities
+```
+
+## Injuries
+
+As in the previous subsection you'll find below a stacked bar plot of the injuries for each state and each category of events. To achieve this we need again a new data frame "sum.injuries" that computes the number of injuries for each state and each category of events with the help of the agggregate() function.
+
+```{r cache = TRUE, echo = TRUE, fig.width = 12}
+sum.injuries <- aggregate(storm.data.restricted$INJURIES, list(category = storm.data.restricted$category, state = storm.data.restricted$STATE), sum)
+colnames(sum.injuries)[3] <- "injuries"
+ggplot(sum.injuries, aes(x = state, y = injuries, fill = category)) + geom_bar(stat = "identity") + ggtitle("Injuries by state and by category") + labs(x = "State", y = "Injuries") + theme(plot.title = element_text(size = 20), legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other"))
+```
+
+In that case, we're able to see very clearly that the state of Texas is the more severely affected by injuries (this is mainly due to the *Flood* type of events).
+
+If we take a look at the injuries in the entire USA, we may note that it is again the *Convection* type of events that is responsible of the biggest part of injuries due to weather events.
+
+```{r cache = TRUE, echo = TRUE}
+sum.injuries.USA <- aggregate(sum.injuries$injuries, list(category = sum.injuries$category), sum)
+colnames(sum.injuries.USA)[2] <- "injuries"
+sum.injuries.USA[order(sum.injuries.USA$injuries, decreasing = TRUE), ]
+```
+
+To conclude this subsection, we give a table listing the category of events responsible of the greatest number of injuries for each state.
+
+```{r cache = TRUE, echo = TRUE}
+rank.injuries <- ddply(sum.injuries, "state", subset, injuries == max(injuries))
+rank.injuries <- rank.injuries[c("state", "category", "injuries")]
+rank.injuries
+```
+
+
+## Material damages
+
+As in the previous subsections you'll find below a stacked bar plot of the material damages for each state and each category of events. To achieve this we need again a new data frame "sum.damage" that computes the amount of property damages and crop damages combined for each state and each category of events with the help of the agggregate() function.
+
+```{r cache = TRUE, echo = TRUE, fig.width = 12}
+library(scales)
+storm.data.restricted$material.damage <- (storm.data.restricted$crop.damage + storm.data.restricted$prop.damage) / 1000000
+sum.damage <- aggregate(storm.data.restricted$material.damage, list(category = storm.data.restricted$category, state = storm.data.restricted$STATE), sum)
+colnames(sum.damage)[3] <- "damages"
+ggplot(sum.damage, aes(x = state, y = damages, fill = category)) + geom_bar(stat = "identity") + ggtitle("Damages (in million $) by state and by category") + labs(x = "State", y = "Damages (in million $)") + theme(plot.title = element_text(size = 20), legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other")) + scale_y_continuous(labels = comma)
+```
+
+In that case, we're able to see very clearly that the state of California is the more severely hit by economic consequences (this is mainly due to the *Flood* type of events).
+
+If we take a look at the material damages in the entire USA, we may note that it is again the *Flood* type of events that have the greatest economic consequences due to weather events.
+
+```{r cache = TRUE, echo = TRUE}
+sum.damage.USA <- aggregate(sum.damage$damages, list(category = sum.damage$category), sum)
+colnames(sum.damage.USA)[2] <- "damages"
+sum.damage.USA[order(sum.damage.USA$damages, decreasing = TRUE), ]
+```
+
+To conclude this subsection, we give a table listing the category of events that have the greatest economic consequences for each state.
+
+```{r cache = TRUE, echo = TRUE}
+rank.damage <- ddply(sum.damage, "state", subset, damages == max(damages))
+rank.damage <- rank.damage[c("state", "category", "damages")]
+rank.damage
 ```
