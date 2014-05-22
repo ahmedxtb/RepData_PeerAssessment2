@@ -174,7 +174,8 @@ Below you'll find a stacked bar plot of the fatalities for each state and each c
 library(ggplot2)
 sum.fatalities <- aggregate(storm.data.restricted$FATALITIES, list(category = storm.data.restricted$category, state = storm.data.restricted$STATE), sum)
 colnames(sum.fatalities)[3] <- "fatalities"
-ggplot(sum.fatalities, aes(x = state, y = fatalities, fill = category)) + geom_bar(stat = "identity") + ggtitle("Fatalities by state and by category") + labs(x = "State", y = "Fatalities") + theme(plot.title = element_text(size = 20), legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other"))
+theme_set(theme_bw())
+ggplot(sum.fatalities, aes(x = state, y = fatalities, fill = category)) + geom_bar(stat = "identity") + ggtitle("Fatalities by state and by category") + labs(x = "State", y = "Fatalities") + theme(plot.title = element_text(size = 20, face = "bold"), legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other"))
 ```
 
 We're able to see very clearly that the state of Illinois is the more severely affected by casualties (this is mainly due to the *Extreme Temperatures* type of events).
@@ -203,7 +204,8 @@ As in the previous subsection you'll find below a stacked bar plot of the injuri
 ```{r cache = TRUE, echo = TRUE, fig.width = 12}
 sum.injuries <- aggregate(storm.data.restricted$INJURIES, list(category = storm.data.restricted$category, state = storm.data.restricted$STATE), sum)
 colnames(sum.injuries)[3] <- "injuries"
-ggplot(sum.injuries, aes(x = state, y = injuries, fill = category)) + geom_bar(stat = "identity") + ggtitle("Injuries by state and by category") + labs(x = "State", y = "Injuries") + theme(plot.title = element_text(size = 20), legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other"))
+theme_set(theme_bw())
+ggplot(sum.injuries, aes(x = state, y = injuries, fill = category)) + geom_bar(stat = "identity") + ggtitle("Injuries by state and by category") + labs(x = "State", y = "Injuries") + theme(plot.title = element_text(size = 20, face = "bold"), legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other"))
 ```
 
 In that case, we're able to see very clearly that the state of Texas is the more severely affected by injuries (this is mainly due to the *Flood* type of events).
@@ -234,7 +236,8 @@ library(scales)
 storm.data.restricted$material.damage <- (storm.data.restricted$crop.damage + storm.data.restricted$prop.damage) / 1000000
 sum.damage <- aggregate(storm.data.restricted$material.damage, list(category = storm.data.restricted$category, state = storm.data.restricted$STATE), sum)
 colnames(sum.damage)[3] <- "damages"
-ggplot(sum.damage, aes(x = state, y = damages, fill = category)) + geom_bar(stat = "identity") + ggtitle("Damages (in million $) by state and by category") + labs(x = "State", y = "Damages (in million $)") + theme(plot.title = element_text(size = 20), legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other")) + scale_y_continuous(labels = comma)
+theme_set(theme_bw())
+ggplot(sum.damage, aes(x = state, y = damages, fill = category)) + geom_bar(stat = "identity") + ggtitle("Damages (in million $) by state and by category") + labs(x = "State", y = "Damages (in million $)") + theme(plot.title = element_text(size = 20, face = "bold"), legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other")) + scale_y_continuous(labels = comma)
 ```
 
 In that case, we're able to see very clearly that the state of California is the more severely hit by economic consequences (this is mainly due to the *Flood* type of events).

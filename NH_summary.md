@@ -728,9 +728,10 @@ library(ggplot2)
 sum.fatalities <- aggregate(storm.data.restricted$FATALITIES, list(category = storm.data.restricted$category, 
     state = storm.data.restricted$STATE), sum)
 colnames(sum.fatalities)[3] <- "fatalities"
+theme_set(theme_bw())
 ggplot(sum.fatalities, aes(x = state, y = fatalities, fill = category)) + geom_bar(stat = "identity") + 
     ggtitle("Fatalities by state and by category") + labs(x = "State", y = "Fatalities") + 
-    theme(plot.title = element_text(size = 20), legend.position = "bottom") + 
+    theme(plot.title = element_text(size = 20, face = "bold"), legend.position = "bottom") + 
     scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", 
         "Flood", "Marine", "Tropical cyclones", "Winter", "Other"))
 ```
@@ -840,9 +841,10 @@ As in the previous subsection you'll find below a stacked bar plot of the injuri
 sum.injuries <- aggregate(storm.data.restricted$INJURIES, list(category = storm.data.restricted$category, 
     state = storm.data.restricted$STATE), sum)
 colnames(sum.injuries)[3] <- "injuries"
+theme_set(theme_bw())
 ggplot(sum.injuries, aes(x = state, y = injuries, fill = category)) + geom_bar(stat = "identity") + 
     ggtitle("Injuries by state and by category") + labs(x = "State", y = "Injuries") + 
-    theme(plot.title = element_text(size = 20), legend.position = "bottom") + 
+    theme(plot.title = element_text(size = 20, face = "bold"), legend.position = "bottom") + 
     scale_fill_discrete("Weather Event", labels = c("Convection", "Extreme Temp", 
         "Flood", "Marine", "Tropical cyclones", "Winter", "Other"))
 ```
@@ -951,12 +953,13 @@ storm.data.restricted$material.damage <- (storm.data.restricted$crop.damage +
 sum.damage <- aggregate(storm.data.restricted$material.damage, list(category = storm.data.restricted$category, 
     state = storm.data.restricted$STATE), sum)
 colnames(sum.damage)[3] <- "damages"
+theme_set(theme_bw())
 ggplot(sum.damage, aes(x = state, y = damages, fill = category)) + geom_bar(stat = "identity") + 
     ggtitle("Damages (in million $) by state and by category") + labs(x = "State", 
-    y = "Damages (in million $)") + theme(plot.title = element_text(size = 20), 
-    legend.position = "bottom") + scale_fill_discrete("Weather Event", labels = c("Convection", 
-    "Extreme Temp", "Flood", "Marine", "Tropical cyclones", "Winter", "Other")) + 
-    scale_y_continuous(labels = comma)
+    y = "Damages (in million $)") + theme(plot.title = element_text(size = 20, 
+    face = "bold"), legend.position = "bottom") + scale_fill_discrete("Weather Event", 
+    labels = c("Convection", "Extreme Temp", "Flood", "Marine", "Tropical cyclones", 
+        "Winter", "Other")) + scale_y_continuous(labels = comma)
 ```
 
 ![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24.png) 
